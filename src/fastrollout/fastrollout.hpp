@@ -122,7 +122,7 @@ namespace fastrollout
     }
 
     template<std::size_t W, std::size_t H>
-    class RandomRolloutPolicy: FastRolloutPolicy<W, H>
+    class RandomRolloutPolicy: public FastRolloutPolicy<W, H>
     {
         detail::RandomRolloutPolicyImpl<W, H> impl;
     public:

@@ -13,7 +13,7 @@ class FastRolloutPolicy
 };
 
 template<std::size_t W, std::size_t H>
-class RandomRolloutPolicy: FastRolloutPolicy<W, H>
+class RandomRolloutPolicy: public FastRolloutPolicy<W, H>
 {
     public:
     explicit RandomRolloutPolicy(std::size_t rollout_count = 1, std::size_t parallel_threads = 1);
