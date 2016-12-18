@@ -62,3 +62,12 @@ TEST(RandomRolloutTest, TestRandomRollout1)
     fastrollout::RandomRolloutPolicy<5, 5> p(50, 2);
     EXPECT_LT(p.run(b, 2.5, Player::B), 0.5);
 }
+
+TEST(RandomRolloutTest, Test19x19Speed)
+{
+    using namespace board;
+    Board<19, 19> b;
+
+    fastrollout::RandomRolloutPolicy<19, 19>p(1);
+    EXPECT_LT(p.run(b, 6.5, Player::B), 1.0); // prevent optimization
+}

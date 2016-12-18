@@ -41,23 +41,50 @@ namespace fastrollout
                     rollout_cnt_(rollout_cnt), thread_cnt_(thread_cnt), gen(std::random_device()())
             {}
 
-            static double logistic(double x)
+            // x: white - black + komi;
+            // impact_factor: [0, 1]. The less the more close to 0.5
+            static double logistic(double x, double impact_factor)
             {
-                return 1 / (1 + std::exp(-x));
+                return 1.0 / (1.0 + std::exp((-impact_factor) * x));
             }
 
             double run_single(const board::Board<W, H> &b, double komi, board::Player start_player)
             {
+                static constexpr std::size_t REFRESH_GOODPOS_INTERVAL = 20;
                 board::Board<W, H> state(b);
+                using BoardType = decltype(state);
                 board::Player cur_player = start_player;
+
+                std::vector<board::GridPoint<W, H>> valid_pos_w, valid_pos_b;
+                std::size_t valid_pos_age = REFRESH_GOODPOS_INTERVAL;
+                std::size_t rollout_cnt = 0;
                 for (;;)
                 {
-                    auto validPos = state.getAllValidPosition(cur_player);
-                    if (validPos.empty())
+                    if (state.getStep() > W * H * 0.7 && rollout_cnt > 10)
                         break;
-                    std::uniform_int_distribution<> int_dist(0, validPos.size() - 1);
-                    auto &pos = validPos[int_dist(gen)];
-                    state.place(pos, cur_player);
+                    board::GridPoint<W, H> cur_point;
+                    bool is_empty = false;
+                    do
+                    {
+                        auto &cur_valid_pos_vec = cur_player == board::Player::B ? valid_pos_b : valid_pos_w;
+                        if (valid_pos_age >= REFRESH_GOODPOS_INTERVAL || cur_valid_pos_vec.empty())
+                        {
+                            cur_valid_pos_vec = state.getAllGoodPosition(cur_player);
+                            std::shuffle(cur_valid_pos_vec.begin(), cur_valid_pos_vec.end(), gen);
+                            if (cur_valid_pos_vec.empty())
+                            {
+                                is_empty = true;
+                                break;
+                            }
+                            valid_pos_age = 0;
+                        }
+                        cur_point = *cur_valid_pos_vec.rbegin();
+                        cur_valid_pos_vec.pop_back();
+                    } while (state.getPosStatus(cur_point, cur_player) != BoardType::PositionStatus::OK);
+                    if (is_empty)
+                        break;
+                    state.place(cur_point, cur_player);
+                    ++rollout_cnt;
                     cur_player = board::getOpponentPlayer(cur_player);
                 }
 
@@ -74,7 +101,8 @@ namespace fastrollout
                             break;
                     }
                 }
-                return logistic(white_lib - black_lib + komi); // minus <=> black dominates <=> return 0
+                double impact_factor = std::pow(0.98, rollout_cnt);
+                return logistic((int)white_lib - (int)black_lib + komi, impact_factor); // minus <=> black dominates <=> return 0
             }
 
             void thread_runner(std::size_t cnt, const board::Board<W, H>& b, double komi,
