@@ -50,7 +50,7 @@ namespace fastrollout
 
             double run_single(const board::Board<W, H> &b, double komi, board::Player start_player)
             {
-                static constexpr std::size_t REFRESH_GOODPOS_INTERVAL = 20;
+                static constexpr std::size_t REFRESH_GOODPOS_INTERVAL = 10;
                 board::Board<W, H> state(b);
                 using BoardType = decltype(state);
                 board::Player cur_player = start_player;
