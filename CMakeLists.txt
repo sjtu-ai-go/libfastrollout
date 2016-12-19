@@ -27,7 +27,7 @@ endif()
 include_directories(src/)
 add_library(fastrollout STATIC src/fastrollout/fastrollout.cpp)
 target_link_libraries(fastrollout ${libgoboard_LIBS})
-set(libfastrollout_INCLUDE_DIR ${libgoboard_INCLUDE_DIR} ${libgoboard_SOURCE_DIR}/src PARENT_SCOPE)
+set(libfastrollout_INCLUDE_DIR ${libfastrollout_SOURCE_DIR}/src ${libgoboard_INCLUDE_DIR} ${libgoboard_SOURCE_DIR}/src PARENT_SCOPE)
 
 #################################
 # tests
