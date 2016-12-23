@@ -87,7 +87,7 @@ namespace fastrollout
                     ++rollout_cnt;
                     cur_player = board::getOpponentPlayer(cur_player);
                 }
-
+/*
                 std::size_t black_lib = 0, white_lib = 0;
                 for (auto it = state.groupBegin(); it != state.groupEnd(); ++it)
                 {
@@ -101,8 +101,45 @@ namespace fastrollout
                             break;
                     }
                 }
+*/
+                std::size_t black_field = 0, white_field = 0;
+                for (std::size_t i = 0; i < W; ++i)
+                    for (std::size_t j = 0; j < H; ++j)
+                    {
+                        board::GridPoint<W, H> cur_point(i, j);
+                        switch (state.getPointState(board::GridPoint<W, H>(i, j)))
+                        {
+                            case board::PointState::B:
+                                ++black_field;
+                                break;
+                            case board::PointState::W:
+                                ++white_field;
+                                break;
+                            default:
+                                std::size_t neighbor_b = 0, neighbor_w = 0;
+                                cur_point.for_each_adjacent([&](board::GridPoint<W, H> adjP) {
+                                    switch (state.getPointState(adjP)) {
+                                        case board::PointState::B:
+                                            ++neighbor_b;
+                                            break;
+                                        case board::PointState::W:
+                                            ++neighbor_w;
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                });
+
+                                if (neighbor_b != 0 && neighbor_w == 0)
+                                    ++black_field;
+                                if (neighbor_b == 0 && neighbor_w != 0)
+                                    ++white_field;
+                                break;
+                        }
+                    }
+
                 double impact_factor = std::pow(0.98, rollout_cnt);
-                return logistic((int)white_lib - (int)black_lib + komi, impact_factor); // minus <=> black dominates <=> return 0
+                return logistic((int)white_field - (int)black_field + komi, impact_factor); // minus <=> black dominates <=> return 0
             }
 
             void thread_runner(std::size_t cnt, const board::Board<W, H>& b, double komi,
