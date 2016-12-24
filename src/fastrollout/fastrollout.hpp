@@ -51,6 +51,7 @@ namespace fastrollout
             double run_single(const board::Board<W, H> &b, double komi, board::Player start_player)
             {
                 static constexpr std::size_t REFRESH_GOODPOS_INTERVAL = 10;
+                //static constexpr std::size_t MAX_ROLLOUT_CNT = 100;
                 board::Board<W, H> state(b);
                 using BoardType = decltype(state);
                 board::Player cur_player = start_player;
@@ -60,8 +61,10 @@ namespace fastrollout
                 std::size_t rollout_cnt = 0;
                 for (;;)
                 {
-                    if (state.getStep() > W * H * 0.7 && rollout_cnt > 10)
+                    /*
+                    if (rollout_cnt > MAX_ROLLOUT_CNT)
                         break;
+                    */
                     board::GridPoint<W, H> cur_point;
                     bool is_empty = false;
                     do
