@@ -107,40 +107,39 @@ namespace fastrollout
                 }
 */
                 std::size_t black_field = 0, white_field = 0;
-                for (std::size_t i = 0; i < W; ++i)
-                    for (std::size_t j = 0; j < H; ++j)
+                using PointType = typename BoardType::PointType;
+                PointType::for_all([&](PointType cur_point)
+                {
+                    switch (state.getPointState(cur_point))
                     {
-                        board::GridPoint<W, H> cur_point(i, j);
-                        switch (state.getPointState(board::GridPoint<W, H>(i, j)))
-                        {
-                            case board::PointState::B:
-                                ++black_field;
-                                break;
-                            case board::PointState::W:
-                                ++white_field;
-                                break;
-                            default:
-                                std::size_t neighbor_b = 0, neighbor_w = 0;
-                                cur_point.for_each_adjacent([&](board::GridPoint<W, H> adjP) {
-                                    switch (state.getPointState(adjP)) {
-                                        case board::PointState::B:
-                                            ++neighbor_b;
-                                            break;
-                                        case board::PointState::W:
-                                            ++neighbor_w;
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                });
+                        case board::PointState::B:
+                            ++black_field;
+                            break;
+                        case board::PointState::W:
+                            ++white_field;
+                            break;
+                        default:
+                            std::size_t neighbor_b = 0, neighbor_w = 0;
+                            cur_point.for_each_adjacent([&](board::GridPoint<W, H> adjP) {
+                                switch (state.getPointState(adjP)) {
+                                    case board::PointState::B:
+                                        ++neighbor_b;
+                                        break;
+                                    case board::PointState::W:
+                                        ++neighbor_w;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            });
 
-                                if (neighbor_b != 0 && neighbor_w == 0)
-                                    ++black_field;
-                                if (neighbor_b == 0 && neighbor_w != 0)
-                                    ++white_field;
-                                break;
-                        }
+                            if (neighbor_b != 0 && neighbor_w == 0)
+                                ++black_field;
+                            if (neighbor_b == 0 && neighbor_w != 0)
+                                ++white_field;
+                            break;
                     }
+                });
 
                 double impact_factor = std::pow(0.98, rollout_cnt);
                 return logistic((int)white_field - (int)black_field + komi, impact_factor); // minus <=> black dominates <=> return 0
