@@ -83,6 +83,7 @@ namespace fastrollout
                         }
                         cur_point = *cur_valid_pos_vec.rbegin();
                         cur_valid_pos_vec.pop_back();
+                        ++valid_pos_age;
                     } while (state.getPosStatus(cur_point, cur_player) != BoardType::PositionStatus::OK);
                     if (is_empty)
                         break;
