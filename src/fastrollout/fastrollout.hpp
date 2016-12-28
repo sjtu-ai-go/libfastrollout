@@ -50,14 +50,15 @@ namespace fastrollout
 
             double run_single(const board::Board<W, H> &b, double komi, board::Player start_player)
             {
-                static constexpr std::size_t REFRESH_GOODPOS_INTERVAL = 10;
+                static const std::size_t REFRESH_GOODPOS_INTERVAL = b.getStep() < 100 ? 10 :
+                                                                    b.getStep() < 200 ? 5 : 3;
                 //static constexpr std::size_t MAX_ROLLOUT_CNT = 100;
                 static constexpr std::size_t MAX_STEPS = 400;
                 board::Board<W, H> state(b);
                 using BoardType = decltype(state);
                 board::Player cur_player = start_player;
 
-                std::vector<board::GridPoint<W, H>> valid_pos_w, valid_pos_b;
+                std::vector< std::pair<board::GridPoint<W, H>, double> > valid_pos_score_b, valid_pos_score_w;
                 std::size_t valid_pos_age = REFRESH_GOODPOS_INTERVAL;
                 std::size_t rollout_cnt = 0;
                 for (;;)
@@ -68,25 +69,41 @@ namespace fastrollout
                     */
                     if (state.getStep() > MAX_STEPS)
                         break;
-                    
+
+                    using PT = board::GridPoint<W, H>;
                     board::GridPoint<W, H> cur_point;
                     bool is_empty = false;
                     do
                     {
-                        auto &cur_valid_pos_vec = cur_player == board::Player::B ? valid_pos_b : valid_pos_w;
-                        if (valid_pos_age >= REFRESH_GOODPOS_INTERVAL || cur_valid_pos_vec.empty())
+                        auto &cur_valid_pos_score_vec = cur_player == board::Player::B ? valid_pos_score_b: valid_pos_score_w;
+                        if (valid_pos_age >= REFRESH_GOODPOS_INTERVAL || cur_valid_pos_score_vec.empty())
                         {
-                            cur_valid_pos_vec = state.getAllGoodPosition(cur_player);
-                            std::shuffle(cur_valid_pos_vec.begin(), cur_valid_pos_vec.end(), gen);
-                            if (cur_valid_pos_vec.empty())
+                            auto goodPos = state.getAllGoodPosition(cur_player);
+                            cur_valid_pos_score_vec.clear();
+
+                            for (PT p: goodPos)
+                                cur_valid_pos_score_vec.emplace_back(p, state.getPointScore(p, cur_player));
+
+                            std::sort(cur_valid_pos_score_vec.begin(), cur_valid_pos_score_vec.end(),
+                                      [](const std::pair<PT, double> &a, const std::pair<PT, double> &b) {
+                                          return a.second < b.second;
+                                      });
+
+                            if (cur_valid_pos_score_vec.empty())
                             {
                                 is_empty = true;
                                 break;
                             }
                             valid_pos_age = 0;
                         }
-                        cur_point = *cur_valid_pos_vec.rbegin();
-                        cur_valid_pos_vec.pop_back();
+                        // Choose best candidate!
+
+                        std::uniform_int_distribution<> u(0, std::min(cur_valid_pos_score_vec.size() - 1, std::size_t(10)));
+                        auto max_score_ridx = u(gen);
+
+                        cur_point = (cur_valid_pos_score_vec.rbegin() + max_score_ridx)->first;
+                        cur_valid_pos_score_vec.erase(cur_valid_pos_score_vec.begin() +
+                                                              (cur_valid_pos_score_vec.size() - 1) - max_score_ridx);
                         ++valid_pos_age;
                     } while (state.getPosStatus(cur_point, cur_player) != BoardType::PositionStatus::OK);
                     if (is_empty)
