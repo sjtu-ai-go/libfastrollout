@@ -52,7 +52,7 @@ namespace fastrollout
             {
                 static constexpr std::size_t REFRESH_GOODPOS_INTERVAL = 10;
                 //static constexpr std::size_t MAX_ROLLOUT_CNT = 100;
-                static constexpr std::size_t MAX_STEPS = 500;
+                static constexpr std::size_t MAX_STEPS = 400;
                 board::Board<W, H> state(b);
                 using BoardType = decltype(state);
                 board::Player cur_player = start_player;
