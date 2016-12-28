@@ -11,6 +11,12 @@ set(CMAKE_CXX_STANDARD 11)
 ################################
 find_package(Threads REQUIRED)
 
+################################
+# Find boost
+################################
+find_package(Boost 1.46 REQUIRED COMPONENTS system)
+include_directories(${Boost_INCLUDE_DIRS})
+
 ##################################
 # libgoboard
 ##################################
@@ -25,8 +31,8 @@ endif()
 # libfastrollout
 ##################################
 include_directories(src/)
-add_library(fastrollout STATIC src/fastrollout/fastrollout.cpp)
-target_link_libraries(fastrollout ${libgoboard_LIBS})
+add_library(fastrollout STATIC src/fastrollout/fastrollout.cpp src/fastrollout/fastrollout.hpp src/fastrollout/fastrollout_cnn.hpp)
+target_link_libraries(fastrollout ${libgoboard_LIBS} ${Boost_SYSTEM_LIBRARY})
 set(libfastrollout_INCLUDE_DIR ${libfastrollout_SOURCE_DIR}/src ${libgoboard_INCLUDE_DIR} ${libgoboard_SOURCE_DIR}/src PARENT_SCOPE)
 
 #################################
@@ -45,4 +51,10 @@ if (libfastrollout_build_tests)
     add_executable(fastrollout-test src/fastrollout_test.cpp)
     target_link_libraries(fastrollout-test fastrollout gtest gtest_main)
     add_test(fastrollout_test fastrollout-test)
+    ###############################
+    # cnntest
+    ###############################
+    add_executable(fr-cnn-test src/fastrollout_cnn_test.cpp)
+    target_link_libraries(fr-cnn-test fastrollout gtest gtest_main)
+    add_test(fastrollout_cnn_test fr-cnn-test)
 endif()
